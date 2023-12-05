@@ -5,6 +5,7 @@
 #include "Poco/Net/HTTPClientSession.h"
 #include "Poco/Net/HTTPRequest.h"
 #include "Poco/Net/HTTPResponse.h"
+#include "Poco/Net/HTTPDigestCredentials.h"
 #include "Poco/Path.h"
 #include "Poco/StreamCopier.h"
 #include "Poco/StringTokenizer.h"
@@ -14,7 +15,7 @@ using namespace Poco;
 
 int main(int argc, char* agrv[])
 {
-    const std::string uri_link= "http://192.168.254.161/cgi-bin/magicBox.cgi?action=getLanguageCaps";
+    const std::string uri_link= "http://192.168.2.166/cgi-bin/magicBox.cgi?action=getLanguageCaps";
 
     URI uri(uri_link);
     std::cout << "host: " << uri.getHost() << " Port: " << uri.getPort() << std::endl;
@@ -78,6 +79,22 @@ int main(int argc, char* agrv[])
 
     std::string nc = "00000001";
     std::string cnonce = "0a4f113b";
+
+    HTTPDigestCredentials credentials("admin", "nexpa1234");
+    credentials.authenticate(req, res);
+
+    session.sendRequest(req);
+
+    // Get the new response
+    //session.receiveResponse(res);
+
+    // Print the new response
+    std::istream &responseStream = session.receiveResponse(res);
+    StreamCopier::copyStream(responseStream, std::cout);
+    std::cout << res.getStatus() << " " << res.getReason() << std::endl;
+
+    std::cout << "Response Header : " << std::endl;
+    res.write(std::cout);
 
     
     return 0;
