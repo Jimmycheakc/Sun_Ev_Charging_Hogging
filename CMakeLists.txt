@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.10)
 
 project(ev_charging_hogging)
 
@@ -14,6 +14,8 @@ link_directories(/usr/local/lib)
 # List your source files
 set(SOURCE_FILES
     http_client.cpp
+    common.cpp
+    log.cpp
     ev_charging.cpp
 )
 
