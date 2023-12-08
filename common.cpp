@@ -20,9 +20,16 @@ Common* Common::getInstance()
     return common_;
 }
 
-std::string Common::FnGetDateTime()
+std::string Common::FnFormatDateYYMMDD()
 {
-    Poco::DateTime now;
+    Poco::LocalDateTime now;
     std::string dateTimeStr(Poco::DateTimeFormatter::format(now, "%y%m%d"));
+    return dateTimeStr;
+}
+
+std::string Common::FnFormatDateYYMMDD_HHMMSS()
+{
+    Poco::LocalDateTime now;
+    std::string dateTimeStr(Poco::DateTimeFormatter::format(now, "%y%m%d_%H%M%S"));
     return dateTimeStr;
 }

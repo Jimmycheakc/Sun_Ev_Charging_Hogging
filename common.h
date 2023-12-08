@@ -5,7 +5,8 @@ class Common
 {
 public:
     static Common* getInstance();
-    std::string FnGetDateTime();
+    std::string FnFormatDateYYMMDD();
+    std::string FnFormatDateYYMMDD_HHMMSS();
 
     Common(Common& common) = delete;
 

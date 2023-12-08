@@ -120,7 +120,10 @@ int main(int argc, char* agrv[])
     info << "start " << agrv[0] << " , version: 0.0.1 build:" << __DATE__ << " " << __TIME__;
     AppLogger::getInstance()->FnLog(info.str());
 
-    std::cout<< "Result:" << httpClient::getInstance()->FnGetHeartBeat() << std::endl;
+    //std::cout<< "Result:" << httpClient::getInstance()->FnGetHeartBeat() << std::endl;
+    //std::cout<< "Result:" << httpClient::getInstance()->FnGetSnapShot() << std::endl;
+    //std::cout<< "Result:" << httpClient::getInstance()->FnSubscibeToSnapShotParked() << std::endl;
+    httpClient::getInstance()->FnSubscribeToSnapShot();
 
    return 0;
 }
