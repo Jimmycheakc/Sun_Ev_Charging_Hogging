@@ -2,6 +2,9 @@
 #include <string>
 #include <sstream>
 #include "http_client.h"
+#include "Poco/DateTime.h"
+#include "Poco/DateTimeFormat.h"
+#include "Poco/DateTimeFormatter.h"
 #include "Poco/URI.h"
 #include "Poco/Net/HTTPClientSession.h"
 #include "Poco/Net/HTTPRequest.h"
@@ -10,6 +13,7 @@
 #include "Poco/Net/MessageHeader.h"
 #include "Poco/Net/MultipartReader.h"
 #include "Poco/Net/PartHandler.h"
+#include "Poco/NumberParser.h"
 #include "Poco/File.h"
 #include "Poco/FileStream.h"
 #include "Poco/StreamCopier.h"
@@ -287,6 +291,8 @@ bool httpClient::do_subscribeToSnapShot(Poco::Net::HTTPClientSession& session, P
         Poco::Net::MessageHeader::splitParameters(contentType.begin(), contentType.end(), params);
         boundary = params.get("boundary", "");
         Poco::Net::MultipartReader reader(rs, boundary);
+        event_t event;
+        memset(&event, 0 , sizeof(event));
 
         while (reader.hasNextPart())
         {
@@ -294,38 +300,119 @@ bool httpClient::do_subscribeToSnapShot(Poco::Net::HTTPClientSession& session, P
             reader.nextPart(partHeader);
 
             std::string ct = partHeader.get("Content-Type", "");
-            int contentLength = std::stoi(partHeader.get("Content-Length", ""));
-            if (ct == "text/plain") {
-                // Process text/plain part
-                std::string partData;
-                Poco::StreamCopier::copyToString(reader.stream(), partData);
-                std::cout << "Text Part: " << partData << " Content-Length: " << contentLength << std::endl;
-                std::string logMsg;
-                logMsg = partData.substr(0, contentLength);
-                AppLogger::getInstance()->FnLog(logMsg);
-            }
-            else if (ct == "image/jpeg")
+            std::string cl = partHeader.get("Content-Length", "");
+
+            if (!cl.empty() && !ct.empty())
             {
-                try
-                {
-                    // Save the image
-                    std::string absImagePath = imageDirectoryPath + "/Img_" + Common::getInstance()->FnFormatDateYYMMDD_HHMMSS() + ".jpg";
-                    if (!isImageDirectoryExists())
+                int contentLength = std::stoi(cl);
+                if (ct == "text/plain") {
+                    // Process text/plain part
+                    std::string partData;
+                    Poco::StreamCopier::copyToString(reader.stream(), partData);
+                    std::istringstream partStream(partData);
+                    std::string line;
+                    memset(&event, 0 , sizeof(event));
+
+                    while (std::getline(partStream, line))
                     {
-                        createImageDirectory();
+                        if (line.find("Heartbeat") != std::string::npos)
+                        {
+                            AppLogger::getInstance()->FnLog(line);
+                        }
+                        else if (line.find("].Channel") != std::string::npos)
+                        {
+                            size_t equalSignPos = line.find("=");
+                            if (equalSignPos != std::string::npos)
+                            {
+                                event.evt_channel = line.substr(equalSignPos+1, line.length() - equalSignPos);
+                            }
+                            AppLogger::getInstance()->FnLog(line);
+                        }
+                        else if (line.find("].ParkingSpaceStatus") != std::string::npos)
+                        {
+                            size_t equalSignPos = line.find("=");
+                            if (equalSignPos != std::string::npos)
+                            {
+                                event.evt_parking_status = line.substr(equalSignPos+1, line.length() - equalSignPos);
+                            }
+                            AppLogger::getInstance()->FnLog(line);
+                        }
+                        else if (line.find("].TrafficCar.PlateNumber") != std::string::npos)
+                        {
+                            size_t equalSignPos = line.find("=");
+                            if (equalSignPos != std::string::npos)
+                            {
+                                event.evt_lpn = line.substr(equalSignPos+1, line.length() - equalSignPos);
+                            }
+                            AppLogger::getInstance()->FnLog(line);
+                        }
+                        else if (line.find("].TrafficCar.UTC") != std::string::npos)
+                        {
+                            size_t equalSignPos = line.find("=");
+                            if (equalSignPos != std::string::npos)
+                            {
+                                event.evt_snapshot_time = line.substr(equalSignPos+1, line.length() - equalSignPos);
+                            }
+                            AppLogger::getInstance()->FnLog(line);
+                        }
+                        else if (line.find("].TrafficCar.Lane") != std::string::npos)
+                        {
+                            size_t equalSignPos = line.find("=");
+                            if (equalSignPos != std::string::npos)
+                            {
+                                event.evt_lane = line.substr(equalSignPos+1, line.length() - equalSignPos);
+                            }
+                            AppLogger::getInstance()->FnLog(line);
+                        }
                     }
-                    Poco::FileOutputStream fileStream(absImagePath);
-                    Poco::StreamCopier::copyStream(reader.stream(), fileStream);
-                    fileStream.close();
-                    AppLogger::getInstance()->FnLog("Image stored :" + absImagePath);
                 }
-                catch(Poco::Exception& ex)
+                else if (ct == "image/jpeg")
                 {
-                    std::cerr << "Error saving image: " << ex.displayText() << std::endl;
+                    try
+                    {
+                        // Save the image
+                        std::string absImagePath;
+
+                        if (!event.evt_snapshot_time.empty())
+                        {
+                            try
+                            {
+                                std::string UTCStr = event.evt_snapshot_time;
+                                Poco::trimInPlace(UTCStr);
+                                Poco::Int64 intUTC = Poco::NumberParser::parse(UTCStr);
+                                Poco::DateTime dateTimeUTC(Poco::Timestamp::fromEpochTime(intUTC));
+                                std::string dateTimeUTCStr(Poco::DateTimeFormatter::format(dateTimeUTC, "%y%m%d_%H%M%S"));
+                                absImagePath = imageDirectoryPath + "/Img_" + dateTimeUTCStr + ".jpg";
+                            }
+                            catch(const Poco::Exception& ex)
+                            {
+                                std::cerr << "Error Parsing the string as integer : " << ex.displayText() << std::endl;
+                            }
+                        }
+                        else
+                        {
+                            absImagePath = imageDirectoryPath + "/Img_" + Common::getInstance()->FnFormatDateYYMMDD_HHMMSS() + ".jpg";
+                            AppLogger::getInstance()->FnLog("Date for filename is get from current time.");
+                        }
+
+                        if (!isImageDirectoryExists())
+                        {
+                            createImageDirectory();
+                        }
+                        Poco::FileOutputStream fileStream(absImagePath);
+                        Poco::StreamCopier::copyStream(reader.stream(), fileStream);
+                        fileStream.close();
+                        AppLogger::getInstance()->FnLog("Image stored :" + absImagePath);
+                    }
+                    catch(Poco::Exception& ex)
+                    {
+                        std::cerr << "Error saving image: " << ex.displayText() << std::endl;
+                    }
                 }
             }
         }
 
+        session.reset();
         return true;
     }
     else

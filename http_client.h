@@ -1,5 +1,6 @@
 #include <iostream>
 #include <string>
+#include <vector>
 #include "Poco/Net/HTTPClientSession.h"
 #include "Poco/Net/HTTPRequest.h"
 #include "Poco/Net/HTTPResponse.h"
@@ -9,6 +10,14 @@
 class httpClient
 {
 public:
+    typedef struct event{
+        std::string evt_channel;
+        std::string evt_parking_status;
+        std::string evt_lane;
+        std::string evt_lpn;
+        std::string evt_snapshot_time;
+    } event_t;
+    
     const std::string username = "admin";
     const std::string password = "nexpa1234";
     const std::string cameraServerIP = "192.168.2.166";
