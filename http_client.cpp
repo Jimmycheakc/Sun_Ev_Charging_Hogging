@@ -458,3 +458,142 @@ bool httpClient::FnSubscribeToSnapShot()
 
     return true;
 }
+
+bool httpClient::do_getCurrentTime(Poco::Net::HTTPClientSession& session, Poco::Net::HTTPRequest& request, Poco::Net::HTTPResponse& response, std::string& dateTime)
+{
+    AppLogger::getInstance()->FnLog(request.getURI());
+
+    session.sendRequest(request);
+    std::istream& rs = session.receiveResponse(response);
+    
+    // Log the response header
+    std::ostringstream msg;
+    msg << "Status : " << response.getStatus() << " Reason : " << response.getReason();
+    AppLogger::getInstance()->FnLog(msg.str());
+    
+    if (response.getStatus() != Poco::Net::HTTPResponse::HTTP_UNAUTHORIZED)
+    {
+        std::ostringstream responseStream;
+        Poco::StreamCopier::copyStream(rs, responseStream);
+        dateTime = responseStream.str();
+        AppLogger::getInstance()->FnLog(responseStream.str());
+
+        return true;
+    }
+    else
+    {
+        Poco::NullOutputStream null;
+        Poco::StreamCopier::copyStream(rs, null);
+        return false;
+    }
+}
+
+bool httpClient::FnGetCurrentTime(std::string& dateTime)
+{
+    const std::string uri_link= "http://" + cameraServerIP + "/cgi-bin/global.cgi?action=getCurrentTime";
+
+    try
+    {
+        Poco::URI uri(uri_link);
+        std::string path(uri.getPathAndQuery());
+        if (path.empty())
+        {
+            path = "/";
+        }
+        Poco::Net::HTTPDigestCredentials credentials(username, password);
+        Poco::Net::HTTPClientSession session(uri.getHost(), uri.getPort());
+        Poco::Net::HTTPRequest request(Poco::Net::HTTPRequest::HTTP_GET, path, Poco::Net::HTTPMessage::HTTP_1_1);
+        Poco::Net::HTTPResponse response;
+
+        if (!do_getCurrentTime(session, request, response, dateTime))
+        {
+            credentials.authenticate(request, response);
+            if (!do_getCurrentTime(session, request, response, dateTime))
+            {
+                AppLogger::getInstance()->FnLog("Invalid username or password");
+                return false;
+            }
+        }
+    }
+    catch (Poco::Exception& ex)
+    {
+        AppLogger::getInstance()->FnLog(ex.displayText());
+        return false;
+    }
+
+    return true;
+}
+
+bool httpClient::do_setCurrentTime(Poco::Net::HTTPClientSession& session, Poco::Net::HTTPRequest& request, Poco::Net::HTTPResponse& response)
+{
+    AppLogger::getInstance()->FnLog(request.getURI());
+
+    session.sendRequest(request);
+    std::istream& rs = session.receiveResponse(response);
+    
+    // Log the response header
+    std::ostringstream msg;
+    msg << "Status : " << response.getStatus() << " Reason : " << response.getReason();
+    AppLogger::getInstance()->FnLog(msg.str());
+    
+    if (response.getStatus() != Poco::Net::HTTPResponse::HTTP_UNAUTHORIZED)
+    {
+        std::ostringstream responseStream;
+        Poco::StreamCopier::copyStream(rs, responseStream);
+        AppLogger::getInstance()->FnLog(responseStream.str());
+        
+        if (responseStream.str().compare("OK"))
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+    else
+    {
+        Poco::NullOutputStream null;
+        Poco::StreamCopier::copyStream(rs, null);
+        return false;
+    }
+}
+
+bool httpClient::FnSetCurrentTime()
+{
+    Poco::LocalDateTime now;
+    std::string dateTimeStr(Poco::DateTimeFormatter::format(now, "%Y-%n-%e%%20%H:%M:%S"));
+
+    const std::string uri_link= "http://" + cameraServerIP + "/cgi-bin/global.cgi?action=setCurrentTime&time=" + dateTimeStr;
+
+    try
+    {
+        Poco::URI uri(uri_link);
+        std::string path(uri.getPathAndQuery());
+        if (path.empty())
+        {
+            path = "/";
+        }
+        Poco::Net::HTTPDigestCredentials credentials(username, password);
+        Poco::Net::HTTPClientSession session(uri.getHost(), uri.getPort());
+        Poco::Net::HTTPRequest request(Poco::Net::HTTPRequest::HTTP_GET, path, Poco::Net::HTTPMessage::HTTP_1_1);
+        Poco::Net::HTTPResponse response;
+
+        if (!do_setCurrentTime(session, request, response))
+        {
+            credentials.authenticate(request, response);
+            if (!do_setCurrentTime(session, request, response))
+            {
+                AppLogger::getInstance()->FnLog("Invalid username or password");
+                return false;
+            }
+        }
+    }
+    catch (Poco::Exception& ex)
+    {
+        AppLogger::getInstance()->FnLog(ex.displayText());
+        return false;
+    }
+
+    return true;
+}

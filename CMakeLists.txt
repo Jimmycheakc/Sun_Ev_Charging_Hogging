@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.10)
 
 project(ev_charging_hogging)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
 
 # Add include directories
@@ -16,6 +16,7 @@ set(SOURCE_FILES
     http_client.cpp
     common.cpp
     log.cpp
+    database.cpp
     ev_charging.cpp
 )
 
@@ -23,4 +24,4 @@ set(SOURCE_FILES
 add_executable(ev_charging ${SOURCE_FILES})
 
 # Link against libraries
-target_link_libraries(ev_charging PocoFoundation PocoNet)
+target_link_libraries(ev_charging PocoFoundation PocoNet PocoData PocoDataMySQL)
