@@ -13,6 +13,7 @@ link_directories(/usr/local/lib)
 
 # List your source files
 set(SOURCE_FILES
+    ini_parser.cpp
     http_client.cpp
     common.cpp
     log.cpp
@@ -24,4 +25,4 @@ set(SOURCE_FILES
 add_executable(ev_charging ${SOURCE_FILES})
 
 # Link against libraries
-target_link_libraries(ev_charging PocoFoundation PocoNet PocoData PocoDataMySQL)
+target_link_libraries(ev_charging PocoFoundation PocoNet PocoData PocoDataMySQL PocoUtil)

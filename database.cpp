@@ -37,7 +37,7 @@ void Database::FnDatabaseInit()
         Poco::Data::MySQL::Connector::registerConnector();
 
         // Establish a session
-        session_ = std::make_unique<Poco::Data::Session>("MySQL", "host=localhost;user=root;password=sunsjs;db=ev_charging_hogging_database");
+        session_ = std::make_unique<Poco::Data::Session>("MySQL", "host=localhost;user=root;password=yzxh2007;db=ev_charging_hogging_database");
     }
     catch (const Poco::Exception& ex)
     {

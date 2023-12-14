@@ -2,6 +2,7 @@
 #include <string.h>
 #include <sstream>
 #include "database.h"
+#include "ini_parser.h"
 #include "http_client.h"
 #include "Poco/URI.h"
 #include "Poco/Net/HTTPClientSession.h"
@@ -34,6 +35,7 @@ int main(int argc, char* agrv[])
     //httpClient::getInstance()->FnGetCurrentTime(time);
     //std::cout << time << std::endl;
 
+    /*
     Database::getInstance()->FnDatabaseInit();
     Database::parking_lot_t lot = 
     {"1", 
@@ -68,6 +70,11 @@ int main(int argc, char* agrv[])
     }
 
     Database::getInstance()->FnRemoveAllRecord("tbl_ev_lot_trans");
+    */
+    Iniparser::getInstance()->FnIniParserInit();
+    std::cout << Iniparser::getInstance()->FnGetParkingLotLocationCode() << std::endl;
+    std::cout << Iniparser::getInstance()->FnGetTimerForFilteringSnapShot() << std::endl;
+
 
     return 0;
 }
