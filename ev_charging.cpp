@@ -4,6 +4,7 @@
 #include "database.h"
 #include "ini_parser.h"
 #include "camera.h"
+#include "central.h"
 #include "Poco/URI.h"
 #include "Poco/Net/HTTPClientSession.h"
 #include "Poco/Net/HTTPRequest.h"
@@ -71,11 +72,14 @@ int main(int argc, char* agrv[])
 
     Database::getInstance()->FnRemoveAllRecord("tbl_ev_lot_trans");
     */
-   
-    Iniparser::getInstance()->FnIniParserInit();
-    std::cout << Iniparser::getInstance()->FnGetParkingLotLocationCode() << std::endl;
-    std::cout << Iniparser::getInstance()->FnGetTimerForFilteringSnapShot() << std::endl;
 
+    //Iniparser::getInstance()->FnIniParserInit();
+    //std::cout << Iniparser::getInstance()->FnGetParkingLotLocationCode() << std::endl;
+    //std::cout << Iniparser::getInstance()->FnGetTimerForFilteringSnapShot() << std::endl;
+
+    std::cout << "Result : " << Central::getInstance()->FnSendHeartBeatUpdate() << std::endl;
+    std::cout << "Result : " << Central::getInstance()->FnSendDeviceStatusUpdate() << std::endl;
+    std::cout << "Result : " << Central::getInstance()->FnSendParkInParkOutInfo() << std::endl;
 
     return 0;
 }

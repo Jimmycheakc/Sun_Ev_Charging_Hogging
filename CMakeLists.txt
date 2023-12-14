@@ -18,6 +18,7 @@ set(SOURCE_FILES
     common.cpp
     log.cpp
     database.cpp
+    central.cpp
     ev_charging.cpp
 )
 
