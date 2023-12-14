@@ -9,7 +9,7 @@
 #include "Poco/File.h"
 #include "Poco/Path.h"
 
-class httpClient
+class Camera
 {
 public:
     typedef struct event{
@@ -25,7 +25,7 @@ public:
     const std::string cameraServerIP = "192.168.2.166";
     const std::string imageDirectoryPath = Poco::Path::home() + "Desktop/Ev_Charging_Hogging_Image";
 
-    static httpClient* getInstance();
+    static Camera* getInstance();
     bool FnGetHeartBeat();
     bool FnGetSnapShot();
     bool FnSubscibeToSnapShotParked();
@@ -33,13 +33,13 @@ public:
     bool FnSetCurrentTime();
     bool FnGetCurrentTime(std::string& dateTime);
 
-    httpClient(httpClient& httpclient) = delete;
+    Camera(Camera& camera) = delete;
 
-    void operator=(const httpClient&) = delete;
+    void operator=(const Camera&) = delete;
 
 private:
-    static httpClient* httpClient_;
-    httpClient();
+    static Camera* camera_;
+    Camera();
     void createImageDirectory();
     bool isImageDirectoryExists();
     bool do_heartBeatRequest(Poco::Net::HTTPClientSession& session, Poco::Net::HTTPRequest& request, Poco::Net::HTTPResponse& response);

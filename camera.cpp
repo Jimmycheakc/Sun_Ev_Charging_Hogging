@@ -1,7 +1,7 @@
 #include <iostream>
 #include <string>
 #include <sstream>
-#include "http_client.h"
+#include "camera.h"
 #include "Poco/DateTime.h"
 #include "Poco/DateTimeFormat.h"
 #include "Poco/DateTimeFormatter.h"
@@ -21,24 +21,24 @@
 #include "common.h"
 #include "log.h"
 
-httpClient* httpClient::httpClient_ = nullptr;
+Camera* Camera::camera_ = nullptr;
 
-httpClient::httpClient()
+Camera::Camera()
 {
     createImageDirectory();
 }
 
-httpClient* httpClient::getInstance()
+Camera* Camera::getInstance()
 {
-    if (httpClient_ == nullptr)
+    if (camera_ == nullptr)
     {
-        httpClient_ = new httpClient();
+        camera_ = new Camera();
     }
 
-    return httpClient_;
+    return camera_;
 }
 
-void httpClient::createImageDirectory()
+void Camera::createImageDirectory()
 {
     Poco::File imageDirectory(imageDirectoryPath);
 
@@ -59,13 +59,13 @@ void httpClient::createImageDirectory()
     
 }
 
-bool httpClient::isImageDirectoryExists()
+bool Camera::isImageDirectoryExists()
 {
     Poco::File imageDirectory(imageDirectoryPath);
     return imageDirectory.exists();
 }
 
-bool httpClient::do_heartBeatRequest(Poco::Net::HTTPClientSession& session, Poco::Net::HTTPRequest& request, Poco::Net::HTTPResponse& response)
+bool Camera::do_heartBeatRequest(Poco::Net::HTTPClientSession& session, Poco::Net::HTTPRequest& request, Poco::Net::HTTPResponse& response)
 {
     AppLogger::getInstance()->FnLog(request.getURI());
 
@@ -95,7 +95,7 @@ bool httpClient::do_heartBeatRequest(Poco::Net::HTTPClientSession& session, Poco
     }
 }
 
-bool httpClient::FnGetHeartBeat()
+bool Camera::FnGetHeartBeat()
 {
     const std::string uri_link= "http://" + cameraServerIP + "/cgi-bin/trafficParking.cgi?action=getAllParkingSpaceStatus";
 
@@ -131,7 +131,7 @@ bool httpClient::FnGetHeartBeat()
     return true;
 }
 
-bool httpClient::do_snapShotRequest(Poco::Net::HTTPClientSession& session, Poco::Net::HTTPRequest& request, Poco::Net::HTTPResponse& response)
+bool Camera::do_snapShotRequest(Poco::Net::HTTPClientSession& session, Poco::Net::HTTPRequest& request, Poco::Net::HTTPResponse& response)
 {
     AppLogger::getInstance()->FnLog(request.getURI());
 
@@ -168,7 +168,7 @@ bool httpClient::do_snapShotRequest(Poco::Net::HTTPClientSession& session, Poco:
     }
 }
 
-bool httpClient::FnGetSnapShot()
+bool Camera::FnGetSnapShot()
 {
     const std::string uri_link= "http://" + cameraServerIP + "/cgi-bin/snapshot.cgi?channel=1&type=0";
 
@@ -204,7 +204,7 @@ bool httpClient::FnGetSnapShot()
     return true;
 }
 
-bool httpClient::do_subscribeToSnapShotParked(Poco::Net::HTTPClientSession& session, Poco::Net::HTTPRequest& request, Poco::Net::HTTPResponse& response)
+bool Camera::do_subscribeToSnapShotParked(Poco::Net::HTTPClientSession& session, Poco::Net::HTTPRequest& request, Poco::Net::HTTPResponse& response)
 {
     AppLogger::getInstance()->FnLog(request.getURI());
 
@@ -234,7 +234,7 @@ bool httpClient::do_subscribeToSnapShotParked(Poco::Net::HTTPClientSession& sess
     }
 }
 
-bool httpClient::FnSubscibeToSnapShotParked()
+bool Camera::FnSubscibeToSnapShotParked()
 {
     const std::string uri_link= "http://" + cameraServerIP + "/cgi-bin/snapManager.cgi?action=attachFileProc&channel=1&heartbeat=5&Flags[0]=Event&Events=[TrafficParkingSpaceParking]";
 
@@ -270,7 +270,7 @@ bool httpClient::FnSubscibeToSnapShotParked()
     return true;
 }
 
-bool httpClient::do_subscribeToSnapShot(Poco::Net::HTTPClientSession& session, Poco::Net::HTTPRequest& request, Poco::Net::HTTPResponse& response)
+bool Camera::do_subscribeToSnapShot(Poco::Net::HTTPClientSession& session, Poco::Net::HTTPRequest& request, Poco::Net::HTTPResponse& response)
 {
     AppLogger::getInstance()->FnLog(request.getURI());
 
@@ -423,7 +423,7 @@ bool httpClient::do_subscribeToSnapShot(Poco::Net::HTTPClientSession& session, P
     }
 }
 
-bool httpClient::FnSubscribeToSnapShot()
+bool Camera::FnSubscribeToSnapShot()
 {
     const std::string uri_link= "http://" + cameraServerIP + "/cgi-bin/snapManager.cgi?action=attachFileProc&channel=1&heartbeat=60&Flags[0]=Event&Events=[TrafficParkingSpaceParking%2CTrafficParkingSpaceNoParking]";
 
@@ -459,7 +459,7 @@ bool httpClient::FnSubscribeToSnapShot()
     return true;
 }
 
-bool httpClient::do_getCurrentTime(Poco::Net::HTTPClientSession& session, Poco::Net::HTTPRequest& request, Poco::Net::HTTPResponse& response, std::string& dateTime)
+bool Camera::do_getCurrentTime(Poco::Net::HTTPClientSession& session, Poco::Net::HTTPRequest& request, Poco::Net::HTTPResponse& response, std::string& dateTime)
 {
     AppLogger::getInstance()->FnLog(request.getURI());
 
@@ -488,7 +488,7 @@ bool httpClient::do_getCurrentTime(Poco::Net::HTTPClientSession& session, Poco::
     }
 }
 
-bool httpClient::FnGetCurrentTime(std::string& dateTime)
+bool Camera::FnGetCurrentTime(std::string& dateTime)
 {
     const std::string uri_link= "http://" + cameraServerIP + "/cgi-bin/global.cgi?action=getCurrentTime";
 
@@ -524,7 +524,7 @@ bool httpClient::FnGetCurrentTime(std::string& dateTime)
     return true;
 }
 
-bool httpClient::do_setCurrentTime(Poco::Net::HTTPClientSession& session, Poco::Net::HTTPRequest& request, Poco::Net::HTTPResponse& response)
+bool Camera::do_setCurrentTime(Poco::Net::HTTPClientSession& session, Poco::Net::HTTPRequest& request, Poco::Net::HTTPResponse& response)
 {
     AppLogger::getInstance()->FnLog(request.getURI());
 
@@ -559,7 +559,7 @@ bool httpClient::do_setCurrentTime(Poco::Net::HTTPClientSession& session, Poco::
     }
 }
 
-bool httpClient::FnSetCurrentTime()
+bool Camera::FnSetCurrentTime()
 {
     Poco::LocalDateTime now;
     std::string dateTimeStr(Poco::DateTimeFormatter::format(now, "%Y-%n-%e%%20%H:%M:%S"));

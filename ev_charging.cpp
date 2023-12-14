@@ -3,7 +3,7 @@
 #include <sstream>
 #include "database.h"
 #include "ini_parser.h"
-#include "http_client.h"
+#include "camera.h"
 #include "Poco/URI.h"
 #include "Poco/Net/HTTPClientSession.h"
 #include "Poco/Net/HTTPRequest.h"
@@ -25,14 +25,14 @@ int main(int argc, char* agrv[])
     info << "start " << agrv[0] << " , version: 0.0.1 build:" << __DATE__ << " " << __TIME__;
     AppLogger::getInstance()->FnLog(info.str());
 
-    //std::cout<< "Result:" << httpClient::getInstance()->FnGetHeartBeat() << std::endl;
-    //std::cout<< "Result:" << httpClient::getInstance()->FnGetSnapShot() << std::endl;
-    //std::cout<< "Result:" << httpClient::getInstance()->FnSubscibeToSnapShotParked() << std::endl;
-    //httpClient::getInstance()->FnSubscribeToSnapShot();
+    //std::cout<< "Result:" << Camera::getInstance()->FnGetHeartBeat() << std::endl;
+    //std::cout<< "Result:" << Camera::getInstance()->FnGetSnapShot() << std::endl;
+    //std::cout<< "Result:" << Camera::getInstance()->FnSubscibeToSnapShotParked() << std::endl;
+    //Camera::getInstance()->FnSubscribeToSnapShot();
     
-    //httpClient::getInstance()->FnSetCurrentTime();
+    //Camera::getInstance()->FnSetCurrentTime();
     //std::string time;
-    //httpClient::getInstance()->FnGetCurrentTime(time);
+    //Camera::getInstance()->FnGetCurrentTime(time);
     //std::cout << time << std::endl;
 
     /*
@@ -71,6 +71,7 @@ int main(int argc, char* agrv[])
 
     Database::getInstance()->FnRemoveAllRecord("tbl_ev_lot_trans");
     */
+   
     Iniparser::getInstance()->FnIniParserInit();
     std::cout << Iniparser::getInstance()->FnGetParkingLotLocationCode() << std::endl;
     std::cout << Iniparser::getInstance()->FnGetTimerForFilteringSnapShot() << std::endl;

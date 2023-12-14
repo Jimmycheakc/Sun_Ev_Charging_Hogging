@@ -14,7 +14,7 @@ link_directories(/usr/local/lib)
 # List your source files
 set(SOURCE_FILES
     ini_parser.cpp
-    http_client.cpp
+    camera.cpp
     common.cpp
     log.cpp
     database.cpp
