@@ -15,17 +15,17 @@
 #include "Poco/StringTokenizer.h"
 #include "Poco/FileStream.h"
 #include "log.h"
+#include "timer.h"
 
 using namespace Poco::Net;
 using namespace Poco;
-
 
 int main(int argc, char* agrv[])
 {
     std::ostringstream info;
     info << "start " << agrv[0] << " , version: 0.0.1 build:" << __DATE__ << " " << __TIME__;
     AppLogger::getInstance()->FnLog(info.str());
-
+    
     //std::cout<< "Result:" << Camera::getInstance()->FnGetHeartBeat() << std::endl;
     //std::cout<< "Result:" << Camera::getInstance()->FnGetSnapShot() << std::endl;
     //std::cout<< "Result:" << Camera::getInstance()->FnSubscibeToSnapShotParked() << std::endl;
@@ -77,9 +77,18 @@ int main(int argc, char* agrv[])
     //std::cout << Iniparser::getInstance()->FnGetParkingLotLocationCode() << std::endl;
     //std::cout << Iniparser::getInstance()->FnGetTimerForFilteringSnapShot() << std::endl;
 
-    std::cout << "Result : " << Central::getInstance()->FnSendHeartBeatUpdate() << std::endl;
-    std::cout << "Result : " << Central::getInstance()->FnSendDeviceStatusUpdate() << std::endl;
-    std::cout << "Result : " << Central::getInstance()->FnSendParkInParkOutInfo() << std::endl;
+    //std::cout << "Result : " << Central::getInstance()->FnSendHeartBeatUpdate() << std::endl;
+    //std::cout << "Result : " << Central::getInstance()->FnSendDeviceStatusUpdate() << std::endl;
+    //std::cout << "Result : " << Central::getInstance()->FnSendParkInParkOutInfo() << std::endl;
+
+    /*
+    Iniparser::getInstance()->FnIniParserInit();
+    FilterTimer::getInstance()->FnStartFilterTimer();
+    Thread::sleep(20000);
+    std::cout << "Stop Timer" << std::endl;
+    FilterTimer::getInstance()->FnStopFilterTimer();
+    Thread::sleep(20000);
+    */
 
     return 0;
 }

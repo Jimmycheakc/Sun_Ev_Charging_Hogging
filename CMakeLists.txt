@@ -19,6 +19,7 @@ set(SOURCE_FILES
     log.cpp
     database.cpp
     central.cpp
+    timer.cpp
     ev_charging.cpp
 )
 
