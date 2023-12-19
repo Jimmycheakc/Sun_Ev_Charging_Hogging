@@ -262,5 +262,12 @@ int main(int argc, char* agrv[])
     Thread::sleep(20000);
     */
 
+    Iniparser::getInstance()->FnIniParserInit();
+    Database::getInstance()->FnDatabaseInit();
+    Database::getInstance()->FnRemoveAllRecord("tbl_ev_lot_trans");
+    Database::getInstance()->FnRemoveAllRecord("tbl_ev_lot_trans_temp");
+    EvtTimer::getInstance()->FnStartStartUpTimer();
+    Camera::getInstance()->FnSubscribeToSnapShot();
+
     return 0;
 }

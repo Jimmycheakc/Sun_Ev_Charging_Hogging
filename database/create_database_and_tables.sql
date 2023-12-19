@@ -6,6 +6,7 @@ USE ev_charging_hogging_database;
 
 -- Create a table in the database
 CREATE TABLE IF NOT EXISTS tbl_ev_lot_trans (
+    id INT AUTO_INCREMENT PRIMARY KEY,
     location_code VARCHAR(10),
     lot_no VARCHAR(10),
     lpn VARCHAR(10),
@@ -21,6 +22,7 @@ CREATE TABLE IF NOT EXISTS tbl_ev_lot_trans (
 
 -- Create a table in the database
 CREATE TABLE IF NOT EXISTS tbl_ev_lot_trans_temp (
+    id INT AUTO_INCREMENT PRIMARY KEY,
     location_code VARCHAR(10),
     lot_no VARCHAR(10),
     lpn VARCHAR(10),

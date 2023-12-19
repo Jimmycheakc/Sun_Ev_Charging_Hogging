@@ -37,6 +37,8 @@ public:
     const parking_lot_t& FnGetSecondParkingLot() const;
     const parking_lot_t& FnGetThirdParkingLot() const;
 
+    void FnSendDBParkingLotStatusToCentral(const std::string& tableName);
+
     Database(Database& database) = delete;
 
     void operator=(const Database&) = delete;

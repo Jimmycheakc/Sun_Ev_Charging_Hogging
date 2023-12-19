@@ -233,7 +233,15 @@ bool Central::FnSendDeviceStatusUpdate(const std::string& deviceIP, const std::s
     return ret;
 }
 
-bool Central::doSendParkInParkOutInfo(Poco::Net::HTTPClientSession& session, Poco::Net::HTTPRequest& request, Poco::Net::HTTPResponse& response)
+bool Central::doSendParkInParkOutInfo(Poco::Net::HTTPClientSession& session, 
+                                Poco::Net::HTTPRequest& request, 
+                                Poco::Net::HTTPResponse& response,
+                                const std::string& lot_no, 
+                                const std::string& lpn, 
+                                const std::string& lot_in_image, 
+                                const std::string& lot_out_image, 
+                                const std::string& lot_in_time,
+                                const std::string& lot_out_time)
 {
     AppLogger::getInstance()->FnLog(request.getURI());
 
@@ -284,7 +292,12 @@ bool Central::doSendParkInParkOutInfo(Poco::Net::HTTPClientSession& session, Poc
     }
 }
 
-bool Central::FnSendParkInParkOutInfo()
+bool Central::FnSendParkInParkOutInfo(const std::string& lot_no, 
+                                const std::string& lpn, 
+                                const std::string& lot_in_image, 
+                                const std::string& lot_out_image, 
+                                const std::string& lot_in_time,
+                                const std::string& lot_out_time)
 {
     const std::string uri_link = "http://" + centralServerIp;
     bool ret = false;
@@ -304,13 +317,13 @@ bool Central::FnSendParkInParkOutInfo()
 
         int retry = 0;
         
-        if (!doSendParkInParkOutInfo(session, request, response))
+        if (!doSendParkInParkOutInfo(session, request, response, lot_no, lpn, lot_in_image, lot_out_image, lot_in_time, lot_out_time))
         {
             retry = 3;
 
             while (retry > 0)
             {
-                if (doSendParkInParkOutInfo(session, request, response))
+                if (doSendParkInParkOutInfo(session, request, response, lot_no, lpn, lot_in_image, lot_out_image, lot_in_time, lot_out_time))
                 {
                     ret = true;
                     break;

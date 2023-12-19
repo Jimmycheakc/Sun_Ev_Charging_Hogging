@@ -20,7 +20,12 @@ public:
     static Central* getInstance();
     bool FnSendHeartBeatUpdate();
     bool FnSendDeviceStatusUpdate(const std::string& deviceIP, const std::string& ec);
-    bool FnSendParkInParkOutInfo();
+    bool FnSendParkInParkOutInfo(const std::string& lot_no, 
+                                const std::string& lpn, 
+                                const std::string& lot_in_image, 
+                                const std::string& lot_out_image, 
+                                const std::string& lot_in_time,
+                                const std::string& lot_out_time);
 
     Central(Central& central) = delete;
 
@@ -33,5 +38,13 @@ private:
     Central();
     bool doSendHeartBeatUpdate(Poco::Net::HTTPClientSession& session, Poco::Net::HTTPRequest& request, Poco::Net::HTTPResponse& response);
     bool doSendDeviceStatusUpdate(Poco::Net::HTTPClientSession& session, Poco::Net::HTTPRequest& request, Poco::Net::HTTPResponse& response, const std::string& deviceIP, const std::string& ec);
-    bool doSendParkInParkOutInfo(Poco::Net::HTTPClientSession& session, Poco::Net::HTTPRequest& request, Poco::Net::HTTPResponse& response);
+    bool doSendParkInParkOutInfo(Poco::Net::HTTPClientSession& session, 
+                                Poco::Net::HTTPRequest& request, 
+                                Poco::Net::HTTPResponse& response,
+                                const std::string& lot_no, 
+                                const std::string& lpn, 
+                                const std::string& lot_in_image, 
+                                const std::string& lot_out_image, 
+                                const std::string& lot_in_time,
+                                const std::string& lot_out_time);
 };

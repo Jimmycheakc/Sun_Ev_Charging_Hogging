@@ -386,10 +386,10 @@ bool Camera::do_subscribeToSnapShot(Poco::Net::HTTPClientSession& session, Poco:
                         {
                             createImageDirectory();
                         }
+                        AppLogger::getInstance()->FnLog("Image stored :" + absImagePath);
                         Poco::FileOutputStream fileStream(absImagePath);
                         Poco::StreamCopier::copyStream(reader.stream(), fileStream);
                         fileStream.close();
-                        AppLogger::getInstance()->FnLog("Image stored :" + absImagePath);
                     }
                     catch(Poco::Exception& ex)
                     {

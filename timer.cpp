@@ -75,7 +75,34 @@ void EvtTimer::onStartUpProcessTimerTimeout(Poco::Timer& timer)
     // Handling timeout case
     if (Database::getInstance()->FnIsTableEmpty("tbl_ev_lot_trans"))
     {
-        
+        Database::getInstance()->FnUpdateThreeLotParkingStatus("tbl_ev_lot_trans_temp");
+        if ((Database::getInstance()->FnGetFirstParkingLot().lot_no.compare("1") == 0) &&
+            (!Database::getInstance()->FnGetFirstParkingLot().lpn.empty())
+            )
+        {
+            Database::getInstance()->FnInsertRecord("tbl_ev_lot_trans", Database::getInstance()->FnGetFirstParkingLot());
+        }
+
+        if ((Database::getInstance()->FnGetSecondParkingLot().lot_no.compare("2") == 0) &&
+            (!Database::getInstance()->FnGetSecondParkingLot().lpn.empty())
+            )
+        {
+            Database::getInstance()->FnInsertRecord("tbl_ev_lot_trans", Database::getInstance()->FnGetSecondParkingLot());
+        }
+
+        if ((Database::getInstance()->FnGetThirdParkingLot().lot_no.compare("3") == 0) &&
+            (!Database::getInstance()->FnGetThirdParkingLot().lpn.empty())
+            )
+        {
+            Database::getInstance()->FnInsertRecord("tbl_ev_lot_trans", Database::getInstance()->FnGetThirdParkingLot());
+        }
+
+        Database::getInstance()->FnSendDBParkingLotStatusToCentral("tbl_ev_lot_trans");
+        Database::getInstance()->FnRemoveAllRecord("tbl_ev_lot_trans_temp");
+    }
+    else
+    {
+        Database::getInstance()->FnUpdateThreeLotParkingStatus("tbl_ev_lot_trans");
     }
 
 
