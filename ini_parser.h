@@ -12,6 +12,9 @@ public:
     void FnIniParserInit();
     std::string FnGetParkingLotLocationCode();
     int FnGetTimerForFilteringSnapShot();
+    std::string FnGetCameraIP();
+    std::string FnGetCentralIP();
+    int FnGetCentralServerPort();
 
     Iniparser(Iniparser& iniparser) = delete;
 
@@ -22,5 +25,8 @@ private:
     Poco::AutoPtr<Poco::Util::IniFileConfiguration> pConf_;
     std::string parkingLotLocationCode_;
     int timerForFilteringSnapShot_;
+    std::string cameraIP_;
+    std::string centralIP_;
+    int centralServerPort_;
     Iniparser();
 };

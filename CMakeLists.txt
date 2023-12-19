@@ -27,4 +27,4 @@ set(SOURCE_FILES
 add_executable(ev_charging ${SOURCE_FILES})
 
 # Link against libraries
-target_link_libraries(ev_charging PocoFoundation PocoNet PocoData PocoDataMySQL PocoUtil)
+target_link_libraries(ev_charging PocoFoundation PocoNet PocoData PocoDataMySQL PocoUtil PocoJSON)

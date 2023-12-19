@@ -5,21 +5,25 @@
 #include "Poco/Timer.h"
 #include "Poco/Thread.h"
 
-class FilterTimer
+class EvtTimer
 {
 
 public:
-    static FilterTimer* getInstance();
+    static EvtTimer* getInstance();
     void FnStartFilterTimer();
     void FnStopFilterTimer();
+    void FnStartStartUpTimer();
+    void FnStopStartUpTimer();
 
-    FilterTimer(FilterTimer& filterTimer) = delete;
+    EvtTimer(EvtTimer& evtTimer) = delete;
 
-    void operator=(const FilterTimer&) = delete;
+    void operator=(const EvtTimer&) = delete;
 
 private:
-    static FilterTimer* filterTimer_;
-    std::unique_ptr<Poco::Timer> pTimer_;
-    FilterTimer();
+    static EvtTimer* evtTimer_;
+    std::unique_ptr<Poco::Timer> pFilterTimer_;
+    std::unique_ptr<Poco::Timer> pStartUpProcessTimer_;
+    EvtTimer();
     void onFilterTimerTimeout(Poco::Timer& timer);
+    void onStartUpProcessTimerTimeout(Poco::Timer& timer);
 };

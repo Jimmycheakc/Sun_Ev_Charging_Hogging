@@ -18,3 +18,18 @@ CREATE TABLE IF NOT EXISTS tbl_ev_lot_trans (
     lot_in_central_sent_dt DATETIME,
     lot_out_central_sent_dt DATETIME
 );
+
+-- Create a table in the database
+CREATE TABLE IF NOT EXISTS tbl_ev_lot_trans_temp (
+    location_code VARCHAR(10),
+    lot_no VARCHAR(10),
+    lpn VARCHAR(10),
+    lot_in_image VARCHAR(200),
+    lot_out_image VARCHAR(200),
+    lot_in_dt DATETIME,
+    lot_out_dt DATETIME,
+    add_dt DATETIME,
+    update_dt DATETIME,
+    lot_in_central_sent_dt DATETIME,
+    lot_out_central_sent_dt DATETIME
+);

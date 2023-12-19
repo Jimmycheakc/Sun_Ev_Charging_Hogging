@@ -2,6 +2,8 @@
 #include <string>
 #include <sstream>
 #include "camera.h"
+#include "database.h"
+#include "ini_parser.h"
 #include "Poco/DateTime.h"
 #include "Poco/DateTimeFormat.h"
 #include "Poco/DateTimeFormatter.h"
@@ -25,6 +27,7 @@ Camera* Camera::camera_ = nullptr;
 
 Camera::Camera()
 {
+    cameraServerIP = Iniparser::getInstance()->FnGetCameraIP();
     createImageDirectory();
 }
 
@@ -204,72 +207,6 @@ bool Camera::FnGetSnapShot()
     return true;
 }
 
-bool Camera::do_subscribeToSnapShotParked(Poco::Net::HTTPClientSession& session, Poco::Net::HTTPRequest& request, Poco::Net::HTTPResponse& response)
-{
-    AppLogger::getInstance()->FnLog(request.getURI());
-
-    session.sendRequest(request);
-    std::istream& rs = session.receiveResponse(response);
-    
-    // Log the response header
-    std::ostringstream msg;
-    msg << "Status : " << response.getStatus() << " Reason : " << response.getReason();
-    AppLogger::getInstance()->FnLog(msg.str());
-    
-    if (response.getStatus() != Poco::Net::HTTPResponse::HTTP_UNAUTHORIZED)
-    {
-        std::ostringstream responseStream;
-        Poco::StreamCopier::copyStream(rs, responseStream);
-        AppLogger::getInstance()->FnLog(responseStream.str());
-
-        // Temp: Handle the response
-
-        return true;
-    }
-    else
-    {
-        Poco::NullOutputStream null;
-        Poco::StreamCopier::copyStream(rs, null);
-        return false;
-    }
-}
-
-bool Camera::FnSubscibeToSnapShotParked()
-{
-    const std::string uri_link= "http://" + cameraServerIP + "/cgi-bin/snapManager.cgi?action=attachFileProc&channel=1&heartbeat=5&Flags[0]=Event&Events=[TrafficParkingSpaceParking]";
-
-    try
-    {
-        Poco::URI uri(uri_link);
-        std::string path(uri.getPathAndQuery());
-        if (path.empty())
-        {
-            path = "/";
-        }
-        Poco::Net::HTTPDigestCredentials credentials(username, password);
-        Poco::Net::HTTPClientSession session(uri.getHost(), uri.getPort());
-        Poco::Net::HTTPRequest request(Poco::Net::HTTPRequest::HTTP_GET, path, Poco::Net::HTTPMessage::HTTP_1_1);
-        Poco::Net::HTTPResponse response;
-
-        if (!do_subscribeToSnapShotParked(session, request, response))
-        {
-            credentials.authenticate(request, response);
-            if (!do_subscribeToSnapShotParked(session, request, response))
-            {
-                AppLogger::getInstance()->FnLog("Invalid username or password");
-                return false;
-            }
-        }
-    }
-    catch (Poco::Exception& ex)
-    {
-        AppLogger::getInstance()->FnLog(ex.displayText());
-        return false;
-    }
-
-    return true;
-}
-
 bool Camera::do_subscribeToSnapShot(Poco::Net::HTTPClientSession& session, Poco::Net::HTTPRequest& request, Poco::Net::HTTPResponse& response)
 {
     AppLogger::getInstance()->FnLog(request.getURI());
@@ -324,7 +261,7 @@ bool Camera::do_subscribeToSnapShot(Poco::Net::HTTPClientSession& session, Poco:
                             size_t equalSignPos = line.find("=");
                             if (equalSignPos != std::string::npos)
                             {
-                                event.evt_channel = line.substr(equalSignPos+1, line.length() - equalSignPos);
+                                event.evt_channel = line.substr(equalSignPos+1, line.length() - equalSignPos - 2);
                             }
                             AppLogger::getInstance()->FnLog(line);
                         }
@@ -333,7 +270,7 @@ bool Camera::do_subscribeToSnapShot(Poco::Net::HTTPClientSession& session, Poco:
                             size_t equalSignPos = line.find("=");
                             if (equalSignPos != std::string::npos)
                             {
-                                event.evt_parking_status = line.substr(equalSignPos+1, line.length() - equalSignPos);
+                                event.evt_parking_status = line.substr(equalSignPos+1, line.length() - equalSignPos - 2);
                             }
                             AppLogger::getInstance()->FnLog(line);
                         }
@@ -342,7 +279,7 @@ bool Camera::do_subscribeToSnapShot(Poco::Net::HTTPClientSession& session, Poco:
                             size_t equalSignPos = line.find("=");
                             if (equalSignPos != std::string::npos)
                             {
-                                event.evt_lpn = line.substr(equalSignPos+1, line.length() - equalSignPos);
+                                event.evt_lpn = line.substr(equalSignPos+1, line.length() - equalSignPos - 2);
                             }
                             AppLogger::getInstance()->FnLog(line);
                         }
@@ -351,7 +288,7 @@ bool Camera::do_subscribeToSnapShot(Poco::Net::HTTPClientSession& session, Poco:
                             size_t equalSignPos = line.find("=");
                             if (equalSignPos != std::string::npos)
                             {
-                                event.evt_snapshot_time = line.substr(equalSignPos+1, line.length() - equalSignPos);
+                                event.evt_snapshot_time = line.substr(equalSignPos+1, line.length() - equalSignPos - 2);
                             }
                             AppLogger::getInstance()->FnLog(line);
                         }
@@ -360,7 +297,16 @@ bool Camera::do_subscribeToSnapShot(Poco::Net::HTTPClientSession& session, Poco:
                             size_t equalSignPos = line.find("=");
                             if (equalSignPos != std::string::npos)
                             {
-                                event.evt_lane = line.substr(equalSignPos+1, line.length() - equalSignPos);
+                                event.evt_lane = line.substr(equalSignPos+1, line.length() - equalSignPos - 2);
+                            }
+                            AppLogger::getInstance()->FnLog(line);
+                        }
+                        else if (line.find("].TrafficCar.Event") != std::string::npos)
+                        {
+                            size_t equalSignPos = line.find("=");
+                            if (equalSignPos != std::string::npos)
+                            {
+                                event.evt_type = line.substr(equalSignPos+1, line.length() - equalSignPos - 2);
                             }
                             AppLogger::getInstance()->FnLog(line);
                         }
@@ -372,6 +318,7 @@ bool Camera::do_subscribeToSnapShot(Poco::Net::HTTPClientSession& session, Poco:
                     {
                         // Save the image
                         std::string absImagePath;
+                        std::string dateTimeImageTime;
 
                         if (!event.evt_snapshot_time.empty())
                         {
@@ -382,6 +329,8 @@ bool Camera::do_subscribeToSnapShot(Poco::Net::HTTPClientSession& session, Poco:
                                 Poco::Int64 intUTC = Poco::NumberParser::parse(UTCStr);
                                 Poco::DateTime dateTimeUTC(Poco::Timestamp::fromEpochTime(intUTC));
                                 std::string dateTimeUTCStr(Poco::DateTimeFormatter::format(dateTimeUTC, "%y%m%d_%H%M%S"));
+                                std::string dateTimeUTCStr2(Poco::DateTimeFormatter::format(dateTimeUTC, "%Y-%m-%d %H:%M:%S"));
+                                dateTimeImageTime = dateTimeUTCStr2;
                                 absImagePath = imageDirectoryPath + "/Img_" + dateTimeUTCStr + ".jpg";
                             }
                             catch(const Poco::Exception& ex)
@@ -393,6 +342,44 @@ bool Camera::do_subscribeToSnapShot(Poco::Net::HTTPClientSession& session, Poco:
                         {
                             absImagePath = imageDirectoryPath + "/Img_" + Common::getInstance()->FnFormatDateYYMMDD_HHMMSS() + ".jpg";
                             AppLogger::getInstance()->FnLog("Date for filename is get from current time.");
+                        }
+
+                        if (event.evt_type.compare("TrafficParkingSpaceNoParking") == 0)
+                        {
+                            Database::parking_lot_t db_parking_lot;
+                            db_parking_lot.location_code = Iniparser::getInstance()->FnGetParkingLotLocationCode();
+                            db_parking_lot.lot_no = event.evt_lane;
+                            db_parking_lot.lpn = event.evt_lpn;
+                            db_parking_lot.lot_in_image_path = "";
+                            db_parking_lot.lot_out_image_path = absImagePath;
+                            db_parking_lot.lot_in_dt = "";
+                            db_parking_lot.lot_out_dt = dateTimeImageTime;
+                            db_parking_lot.add_dt = "";
+                            db_parking_lot.update_dt = "";
+                            db_parking_lot.lot_in_central_sent_dt = "";
+                            db_parking_lot.lot_out_central_sent_dt = "";
+
+                            Database::getInstance()->FnInsertRecord("tbl_ev_lot_trans_temp", db_parking_lot);
+                            AppLogger::getInstance()->FnLog("Inserted into Database, tbl_ev_lot_trans_temp.");
+
+                        }
+                        else if (event.evt_type.compare("TrafficParkingSpaceParking") == 0)
+                        {
+                            Database::parking_lot_t db_parking_lot;
+                            db_parking_lot.location_code = Iniparser::getInstance()->FnGetParkingLotLocationCode();
+                            db_parking_lot.lot_no = event.evt_lane;
+                            db_parking_lot.lpn = event.evt_lpn;
+                            db_parking_lot.lot_in_image_path = absImagePath;
+                            db_parking_lot.lot_out_image_path = "";
+                            db_parking_lot.lot_in_dt = dateTimeImageTime;
+                            db_parking_lot.lot_out_dt = "";
+                            db_parking_lot.add_dt = "";
+                            db_parking_lot.update_dt = "";
+                            db_parking_lot.lot_in_central_sent_dt = "";
+                            db_parking_lot.lot_out_central_sent_dt = "";
+
+                            Database::getInstance()->FnInsertRecord("tbl_ev_lot_trans_temp", db_parking_lot);
+                            AppLogger::getInstance()->FnLog("Inserted into Database, tbl_ev_lot_trans_temp.");
                         }
 
                         if (!isImageDirectoryExists())

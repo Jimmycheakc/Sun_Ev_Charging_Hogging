@@ -25,6 +25,9 @@ void Iniparser::FnIniParserInit()
 
     parkingLotLocationCode_ = pConf_->getString("setting.parking_lot_location_code");
     timerForFilteringSnapShot_ = pConf_->getInt("setting.timer_for_filtering_snapshot");
+    cameraIP_ = pConf_->getString("setting.camera_ip");
+    centralIP_ = pConf_->getString("setting.central_ip");
+    centralServerPort_ = pConf_->getInt("setting.central_server_port");
 }
 
 std::string Iniparser::FnGetParkingLotLocationCode()
@@ -35,4 +38,19 @@ std::string Iniparser::FnGetParkingLotLocationCode()
 int Iniparser::FnGetTimerForFilteringSnapShot()
 {
     return timerForFilteringSnapShot_;
+}
+
+std::string Iniparser::FnGetCameraIP()
+{
+    return cameraIP_;
+}
+
+std::string Iniparser::FnGetCentralIP()
+{
+    return centralIP_;
+}
+
+int Iniparser::FnGetCentralServerPort()
+{
+    return centralServerPort_;
 }

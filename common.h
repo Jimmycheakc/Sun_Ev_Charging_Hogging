@@ -9,6 +9,7 @@ public:
     static Common* getInstance();
     std::string FnFormatDateYYMMDD();
     std::string FnFormatDateYYMMDD_HHMMSS();
+    std::string FnCurrentFormatDateYYYY_MM_DD_HH_MM_SS();
 
     Common(Common& common) = delete;
 

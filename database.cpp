@@ -8,10 +8,14 @@
 #include "Poco/Data/MySQL/Connector.h"
 #include "Poco/Data/Statement.h"
 #include "Poco/Data/RecordSet.h"
+#include "Poco/Mutex.h"
 
 Database* Database::database_ = nullptr;
 
 Database::Database()
+    : first_parking_lot{},
+    second_parking_lot{},
+    third_parking_lot{}
 {
 }
 
@@ -50,6 +54,9 @@ void Database::FnDatabaseInit()
 
 void Database::FnInsertRecord(const std::string& tableName, parking_lot_t lot)
 {
+    // Local scope lock
+    Poco::Mutex::ScopedLock lock(databaseMutex_);
+
     if (!session_->isConnected())
     {
         session_->reconnect();
@@ -99,6 +106,9 @@ void Database::FnInsertRecord(const std::string& tableName, parking_lot_t lot)
 
 void Database::FnSelectAllRecord(const std::string& tableName, std::vector<parking_lot_t>& v_lot)
 {
+    // Local scope lock
+    Poco::Mutex::ScopedLock lock(databaseMutex_);
+
     if (!session_->isConnected())
     {
         session_->reconnect();
@@ -146,8 +156,51 @@ void Database::FnSelectAllRecord(const std::string& tableName, std::vector<parki
     }
 }
 
+bool Database::FnIsTableEmpty(const std::string& tableName)
+{
+    Poco::Mutex::ScopedLock lock(databaseMutex_);
+
+    if (!session_->isConnected())
+    {
+        session_->reconnect();
+    }
+
+    try
+    {
+        std::string query = "SELECT COUNT(*) FROM " + tableName;
+        Poco::Data::Statement select(*session_);
+        select << query;
+
+        select.execute();
+
+        Poco::Data::RecordSet recordSet(select);
+        
+        if (recordSet.moveFirst())
+        {
+            int count;
+            count = recordSet["COUNT(*)"].convert<int>();
+            return count == 0;
+        }
+
+        return false;
+    }
+    catch(const Poco::Exception& ex)
+    {
+        std::ostringstream msg;
+        msg << __func__ << " POCO Exception: " << ex.displayText() << std::endl;
+        std::cerr << msg.str();
+        AppLogger::getInstance()->FnLog(msg.str());
+
+        return false;
+    }
+    
+}
+
 void Database::FnRemoveAllRecord(const std::string& tableName)
 {
+    // Local scope lock
+    Poco::Mutex::ScopedLock lock(databaseMutex_);
+
     if (!session_->isConnected())
     {
         session_->reconnect();
@@ -168,4 +221,106 @@ void Database::FnRemoveAllRecord(const std::string& tableName)
         std::cerr << msg.str();
         AppLogger::getInstance()->FnLog(msg.str());
     }
+}
+
+void Database::FnUpdateThreeLotParkingStatus(const std::string& tableName)
+{
+    // Local scope lock
+    Poco::Mutex::ScopedLock lock(databaseMutex_);
+
+    if (!session_->isConnected())
+    {
+        session_->reconnect();
+    }
+
+    try
+    {
+        // Query on the lot no == '1' and latest time in the record
+        std::string query_first_lot = "SELECT * FROM " + tableName + " WHERE lot_no = '1' ORDER BY COALESCE(lot_in_dt, lot_out_dt) DESC LIMIT 1";
+        Poco::Data::Statement select_first_lot(*session_);
+        select_first_lot << query_first_lot;
+
+        select_first_lot.execute();
+        Poco::Data::RecordSet recordSetFirstLot(select_first_lot);
+        if (recordSetFirstLot.moveFirst())
+        {
+            first_parking_lot.location_code = recordSetFirstLot["location_code"].isEmpty() ? "NULL" : recordSetFirstLot["location_code"].convert<std::string>();
+            first_parking_lot.lot_no = recordSetFirstLot["lot_no"].isEmpty() ? "NULL" : recordSetFirstLot["lot_no"].convert<std::string>();
+            first_parking_lot.lpn = recordSetFirstLot["lpn"].isEmpty() ? "NULL" : recordSetFirstLot["lpn"].convert<std::string>();
+            first_parking_lot.lot_in_image_path = recordSetFirstLot["lot_in_image"].isEmpty() ? "NULL" : recordSetFirstLot["lot_in_image"].convert<std::string>();
+            first_parking_lot.lot_out_image_path = recordSetFirstLot["lot_out_image"].isEmpty() ? "NULL" : recordSetFirstLot["lot_out_image"].convert<std::string>();
+            first_parking_lot.lot_in_dt = recordSetFirstLot["lot_in_dt"].isEmpty() ? "NULL" : Poco::DateTimeFormatter::format(recordSetFirstLot["lot_in_dt"].convert<Poco::DateTime>(), "%Y-%m-%d %H:%M:%S");
+            first_parking_lot.lot_out_dt = recordSetFirstLot["lot_out_dt"].isEmpty() ? "NULL" : Poco::DateTimeFormatter::format(recordSetFirstLot["lot_out_dt"].convert<Poco::DateTime>(), "%Y-%m-%d %H:%M:%S");
+            first_parking_lot.add_dt = recordSetFirstLot["add_dt"].isEmpty() ? "NULL" : Poco::DateTimeFormatter::format(recordSetFirstLot["add_dt"].convert<Poco::DateTime>(), "%Y-%m-%d %H:%M:%S");
+            first_parking_lot.update_dt = recordSetFirstLot["update_dt"].isEmpty() ? "NULL" : Poco::DateTimeFormatter::format(recordSetFirstLot["update_dt"].convert<Poco::DateTime>(), "%Y-%m-%d %H:%M:%S");
+            first_parking_lot.lot_in_central_sent_dt = recordSetFirstLot["lot_in_central_sent_dt"].isEmpty() ? "NULL" : Poco::DateTimeFormatter::format(recordSetFirstLot["lot_in_central_sent_dt"].convert<Poco::DateTime>(), "%Y-%m-%d %H:%M:%S");
+            first_parking_lot.lot_out_central_sent_dt = recordSetFirstLot["lot_out_central_sent_dt"].isEmpty() ? "NULL" : Poco::DateTimeFormatter::format(recordSetFirstLot["lot_out_central_sent_dt"].convert<Poco::DateTime>(), "%Y-%m-%d %H:%M:%S");
+        }
+
+        // Query on the lot no == '2' and latest time in the record
+        std::string query_second_lot = "SELECT * FROM " + tableName + " WHERE lot_no = '2' ORDER BY COALESCE(lot_in_dt, lot_out_dt) DESC LIMIT 1";
+        Poco::Data::Statement select_second_lot(*session_);
+        select_second_lot << query_second_lot;
+
+        select_second_lot.execute();
+        Poco::Data::RecordSet recordSetSecondLot(select_second_lot);
+        if (recordSetSecondLot.moveFirst())
+        {
+            second_parking_lot.location_code = recordSetSecondLot["location_code"].isEmpty() ? "NULL" : recordSetSecondLot["location_code"].convert<std::string>();
+            second_parking_lot.lot_no = recordSetSecondLot["lot_no"].isEmpty() ? "NULL" : recordSetSecondLot["lot_no"].convert<std::string>();
+            second_parking_lot.lpn = recordSetSecondLot["lpn"].isEmpty() ? "NULL" : recordSetSecondLot["lpn"].convert<std::string>();
+            second_parking_lot.lot_in_image_path = recordSetSecondLot["lot_in_image"].isEmpty() ? "NULL" : recordSetSecondLot["lot_in_image"].convert<std::string>();
+            second_parking_lot.lot_out_image_path = recordSetSecondLot["lot_out_image"].isEmpty() ? "NULL" : recordSetSecondLot["lot_out_image"].convert<std::string>();
+            second_parking_lot.lot_in_dt = recordSetSecondLot["lot_in_dt"].isEmpty() ? "NULL" : Poco::DateTimeFormatter::format(recordSetSecondLot["lot_in_dt"].convert<Poco::DateTime>(), "%Y-%m-%d %H:%M:%S");
+            second_parking_lot.lot_out_dt = recordSetSecondLot["lot_out_dt"].isEmpty() ? "NULL" : Poco::DateTimeFormatter::format(recordSetSecondLot["lot_out_dt"].convert<Poco::DateTime>(), "%Y-%m-%d %H:%M:%S");
+            second_parking_lot.add_dt = recordSetSecondLot["add_dt"].isEmpty() ? "NULL" : Poco::DateTimeFormatter::format(recordSetSecondLot["add_dt"].convert<Poco::DateTime>(), "%Y-%m-%d %H:%M:%S");
+            second_parking_lot.update_dt = recordSetSecondLot["update_dt"].isEmpty() ? "NULL" : Poco::DateTimeFormatter::format(recordSetSecondLot["update_dt"].convert<Poco::DateTime>(), "%Y-%m-%d %H:%M:%S");
+            second_parking_lot.lot_in_central_sent_dt = recordSetSecondLot["lot_in_central_sent_dt"].isEmpty() ? "NULL" : Poco::DateTimeFormatter::format(recordSetSecondLot["lot_in_central_sent_dt"].convert<Poco::DateTime>(), "%Y-%m-%d %H:%M:%S");
+            second_parking_lot.lot_out_central_sent_dt = recordSetSecondLot["lot_out_central_sent_dt"].isEmpty() ? "NULL" : Poco::DateTimeFormatter::format(recordSetSecondLot["lot_out_central_sent_dt"].convert<Poco::DateTime>(), "%Y-%m-%d %H:%M:%S");
+        }
+
+        // Query on the lot no == '3' and latest time in the record
+        std::string query_third_lot = "SELECT * FROM " + tableName + " WHERE lot_no = '3' ORDER BY COALESCE(lot_in_dt, lot_out_dt) DESC LIMIT 1";
+        Poco::Data::Statement select_third_lot(*session_);
+        select_third_lot << query_third_lot;
+
+        select_third_lot.execute();
+        Poco::Data::RecordSet recordSetThirdLot(select_third_lot);
+        if (recordSetThirdLot.moveFirst())
+        {
+            third_parking_lot.location_code = recordSetThirdLot["location_code"].isEmpty() ? "NULL" : recordSetThirdLot["location_code"].convert<std::string>();
+            third_parking_lot.lot_no = recordSetThirdLot["lot_no"].isEmpty() ? "NULL" : recordSetThirdLot["lot_no"].convert<std::string>();
+            third_parking_lot.lpn = recordSetThirdLot["lpn"].isEmpty() ? "NULL" : recordSetThirdLot["lpn"].convert<std::string>();
+            third_parking_lot.lot_in_image_path = recordSetThirdLot["lot_in_image"].isEmpty() ? "NULL" : recordSetThirdLot["lot_in_image"].convert<std::string>();
+            third_parking_lot.lot_out_image_path = recordSetThirdLot["lot_out_image"].isEmpty() ? "NULL" : recordSetThirdLot["lot_out_image"].convert<std::string>();
+            third_parking_lot.lot_in_dt = recordSetThirdLot["lot_in_dt"].isEmpty() ? "NULL" : Poco::DateTimeFormatter::format(recordSetThirdLot["lot_in_dt"].convert<Poco::DateTime>(), "%Y-%m-%d %H:%M:%S");
+            third_parking_lot.lot_out_dt = recordSetThirdLot["lot_out_dt"].isEmpty() ? "NULL" : Poco::DateTimeFormatter::format(recordSetThirdLot["lot_out_dt"].convert<Poco::DateTime>(), "%Y-%m-%d %H:%M:%S");
+            third_parking_lot.add_dt = recordSetThirdLot["add_dt"].isEmpty() ? "NULL" : Poco::DateTimeFormatter::format(recordSetThirdLot["add_dt"].convert<Poco::DateTime>(), "%Y-%m-%d %H:%M:%S");
+            third_parking_lot.update_dt = recordSetThirdLot["update_dt"].isEmpty() ? "NULL" : Poco::DateTimeFormatter::format(recordSetThirdLot["update_dt"].convert<Poco::DateTime>(), "%Y-%m-%d %H:%M:%S");
+            third_parking_lot.lot_in_central_sent_dt = recordSetThirdLot["lot_in_central_sent_dt"].isEmpty() ? "NULL" : Poco::DateTimeFormatter::format(recordSetThirdLot["lot_in_central_sent_dt"].convert<Poco::DateTime>(), "%Y-%m-%d %H:%M:%S");
+            third_parking_lot.lot_out_central_sent_dt = recordSetThirdLot["lot_out_central_sent_dt"].isEmpty() ? "NULL" : Poco::DateTimeFormatter::format(recordSetThirdLot["lot_out_central_sent_dt"].convert<Poco::DateTime>(), "%Y-%m-%d %H:%M:%S");
+        }
+    }
+    catch(const Poco::Exception& ex)
+    {
+        std::ostringstream msg;
+        msg << __func__ << " POCO Exception: " << ex.displayText() << std::endl;
+        std::cerr << msg.str();
+        AppLogger::getInstance()->FnLog(msg.str());
+    }
+}
+
+const Database::parking_lot_t& Database::FnGetFirstParkingLot() const
+{
+    return first_parking_lot;
+}
+
+const Database::parking_lot_t& Database::FnGetSecondParkingLot() const
+{
+    return second_parking_lot;
+}
+
+const Database::parking_lot_t& Database::FnGetThirdParkingLot() const
+{
+    return third_parking_lot;
 }

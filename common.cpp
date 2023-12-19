@@ -33,3 +33,10 @@ std::string Common::FnFormatDateYYMMDD_HHMMSS()
     std::string dateTimeStr(Poco::DateTimeFormatter::format(now, "%y%m%d_%H%M%S"));
     return dateTimeStr;
 }
+
+std::string Common::FnCurrentFormatDateYYYY_MM_DD_HH_MM_SS()
+{
+    Poco::LocalDateTime now;
+    std::string dateTimeStr(Poco::DateTimeFormatter::format(now, "%Y-%m-%d %H:%M:%S"));
+    return dateTimeStr;
+}
